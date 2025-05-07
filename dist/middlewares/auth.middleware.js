@@ -49,7 +49,8 @@ const authenticate = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         req.userId = decoded.id;
         res.cookie("accessToken", newAccessToken, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'none'
         });
         return next();
     }

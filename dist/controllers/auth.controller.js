@@ -75,11 +75,13 @@ function signin(req, res) {
             res
                 .cookie("accessToken", accessToken, {
                 httpOnly: true,
-                secure: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'none'
             })
                 .cookie("refreshToken", refreshToken, {
                 httpOnly: true,
-                secure: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'none'
             })
                 .json({ success: true, message: 'Login successful' });
         }
@@ -110,11 +112,13 @@ function refreshToken(req, res) {
             res
                 .cookie("accessToken", newAccessToken, {
                 httpOnly: true,
-                secure: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'none'
             })
                 .cookie("refreshToken", refreshToken, {
                 httpOnly: true,
-                secure: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'none'
             })
                 .json({ success: true, message: 'Token Refreshed' });
         }

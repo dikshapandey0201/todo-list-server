@@ -78,11 +78,13 @@ export async function signin(req: IRequestUser, res: Response): Promise<void> {
     res
     .cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none'
     })
     .cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none'
     })
     .json({success:true, message: 'Login successful' });
   
@@ -113,12 +115,14 @@ export async function refreshToken(req: Request, res: Response): Promise<void> {
 
     res
         .cookie("accessToken", newAccessToken, {
-            httpOnly: true,
-            secure: false,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'none'
         })
         .cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: false,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'none'
         })
         .json({success:true, message: 'Token Refreshed' });
 

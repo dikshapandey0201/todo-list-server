@@ -51,7 +51,8 @@ export const authenticate = async (
 
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none'
     });
 
     return next();
