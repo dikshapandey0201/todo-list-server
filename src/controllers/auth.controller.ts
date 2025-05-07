@@ -1,27 +1,30 @@
 import { Request, Response } from "express";
 import UserModel from "../models/user.model";
 import bcryptjs from "bcryptjs";
-import {generateAccessToken,generateRefreshToken,verifyAccessToken,verifyRefreshToken} from "../utils/jwt";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "../utils/jwt";
 import TaskModel from "../models/task.model";
 
-
 type User = {
-  name?: string; 
+  name?: string;
   email: string;
   password: string;
-  refreshToken?: string; 
-  _id?: string; 
+  refreshToken?: string;
+  _id?: string;
 };
 
 interface IRequestUser extends Request {
-  user?: { _id: string }; 
-  userId?: string; 
+  user?: { _id: string };
+  userId?: string;
 }
 
 export async function signup(req: IRequestUser, res: Response): Promise<void> {
   try {
     const { name, email, password }: User = req.body;
-
 
     const userExists = await UserModel.findOne({ email });
     if (userExists) {
@@ -31,10 +34,8 @@ export async function signup(req: IRequestUser, res: Response): Promise<void> {
 
     const hashedPassword = await bcryptjs.hash(password, 10);
 
-
     const user = new UserModel({ name, email, password: hashedPassword });
     await user.save();
-
 
     res
       .status(201)
@@ -71,23 +72,21 @@ export async function signin(req: IRequestUser, res: Response): Promise<void> {
 
     const accessToken = generateAccessToken(user._id.toString());
     const refreshToken = generateRefreshToken(user._id.toString());
-    user.refreshToken = refreshToken; 
-    await user.save(); 
-
+    user.refreshToken = refreshToken;
+    await user.save();
 
     res
-    .cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none'
-    })
-    .cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none'
-    })
-    .json({success:true, message: 'Login successful' });
-  
+      .cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+      })
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+      })
+      .json({ success: true, message: "Login successful" });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
   }
@@ -113,31 +112,32 @@ export async function refreshToken(req: Request, res: Response): Promise<void> {
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    res
-        .cookie("accessToken", newAccessToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'none'
-        })
-        .cookie("refreshToken", refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'none'
-        })
-        .json({success:true, message: 'Token Refreshed' });
-
+    res.cookie("accessToken", newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+      })
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+      })
+      .json({ success: true, message: "Token Refreshed" });
   } catch (err) {
     res.sendStatus(403);
   }
 }
 
-export async function currentUser(req: IRequestUser,res: Response): Promise<void> {
+export async function currentUser(
+  req: IRequestUser,
+  res: Response
+): Promise<void> {
   try {
     const user = await UserModel.findById(req.userId).select(
       "-password -refreshToken"
     );
     if (!user) {
-      res.status(404).json({ success: false,message: "User not found" });
+      res.status(404).json({ success: false, message: "User not found" });
       return;
     }
     res.status(200).json({ success: true, user });
@@ -146,12 +146,17 @@ export async function currentUser(req: IRequestUser,res: Response): Promise<void
   }
 }
 
-export async function updateUserProfile(req: IRequestUser,res: Response): Promise<void> {
+export async function updateUserProfile(
+  req: IRequestUser,
+  res: Response
+): Promise<void> {
   try {
     const { name, email } = req.body;
-    const user = await UserModel.findById(req.userId).select("-password -refreshToken");
+    const user = await UserModel.findById(req.userId).select(
+      "-password -refreshToken"
+    );
     if (!user) {
-      res.status(404).json({success:false, message: "User not found" });
+      res.status(404).json({ success: false, message: "User not found" });
       return;
     }
 
@@ -159,14 +164,20 @@ export async function updateUserProfile(req: IRequestUser,res: Response): Promis
     user.email = email ?? user.email;
     const updatedUser = await user.save();
 
-    res.json({success:true, message: "Profile updated successfully",user: updatedUser });
+    res.json({
+      success: true,
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
   } catch (error) {
-    res.status(500).json({success:false, message: "Internal Server Error" });
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 }
 
-export async function deleteUser(req: IRequestUser,res: Response): Promise<void> {
-  
+export async function deleteUser(
+  req: IRequestUser,
+  res: Response
+): Promise<void> {
   try {
     if (!req.userId) {
       res
@@ -176,7 +187,6 @@ export async function deleteUser(req: IRequestUser,res: Response): Promise<void>
     }
     await TaskModel.deleteMany({ user: req.userId });
 
-
     const deletedUser = await UserModel.findByIdAndDelete(req.userId);
 
     if (!deletedUser) {
@@ -184,7 +194,16 @@ export async function deleteUser(req: IRequestUser,res: Response): Promise<void>
       return;
     }
 
-    res
+    res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+      })
+      .clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+      })
       .status(200)
       .json({ success: true, message: "User deleted successfully" });
   } catch (error) {
@@ -193,21 +212,28 @@ export async function deleteUser(req: IRequestUser,res: Response): Promise<void>
 }
 
 export async function logout(req: Request, res: Response): Promise<void> {
-    const token = req.cookies?.refreshToken;
-    if (!token) {
-      res.sendStatus(204);
-      return;
-    }
-  
-    const user = await UserModel.findOne({ refreshToken: token });
-    if (user) {
-      user.refreshToken = '';
-      await user.save();
-    }
-  
-    res
-      .clearCookie("accessToken", { httpOnly: true, secure: false })
-      .clearCookie("refreshToken", { httpOnly: true, secure: false })
-      .status(200)
-      .json({ success: true, message: "Logged out successfully" });
+  const token = req.cookies?.refreshToken;
+  if (!token) {
+    res.sendStatus(204);
+    return;
+  }
+
+  const user = await UserModel.findOne({ refreshToken: token });
+  if (user) {
+    user.refreshToken = "";
+    await user.save();
+  }
+
+  res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+    })
+    .clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+    })
+    .status(200)
+    .json({ success: true, message: "Logged out successfully" });
 }

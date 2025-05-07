@@ -75,15 +75,15 @@ function signin(req, res) {
             res
                 .cookie("accessToken", accessToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'none'
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "none",
             })
                 .cookie("refreshToken", refreshToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'none'
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "none",
             })
-                .json({ success: true, message: 'Login successful' });
+                .json({ success: true, message: "Login successful" });
         }
         catch (error) {
             res.status(500).json({ message: "Internal Server Error" });
@@ -109,18 +109,17 @@ function refreshToken(req, res) {
             const newRefreshToken = (0, jwt_1.generateRefreshToken)(user._id.toString());
             user.refreshToken = newRefreshToken;
             yield user.save();
-            res
-                .cookie("accessToken", newAccessToken, {
+            res.cookie("accessToken", newAccessToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'none'
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "none",
             })
                 .cookie("refreshToken", refreshToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'none'
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "none",
             })
-                .json({ success: true, message: 'Token Refreshed' });
+                .json({ success: true, message: "Token Refreshed" });
         }
         catch (err) {
             res.sendStatus(403);
@@ -154,7 +153,11 @@ function updateUserProfile(req, res) {
             user.name = name !== null && name !== void 0 ? name : user.name;
             user.email = email !== null && email !== void 0 ? email : user.email;
             const updatedUser = yield user.save();
-            res.json({ success: true, message: "Profile updated successfully", user: updatedUser });
+            res.json({
+                success: true,
+                message: "Profile updated successfully",
+                user: updatedUser,
+            });
         }
         catch (error) {
             res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -176,7 +179,16 @@ function deleteUser(req, res) {
                 res.status(404).json({ success: false, message: "User not found" });
                 return;
             }
-            res
+            res.clearCookie("accessToken", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "none",
+            })
+                .clearCookie("refreshToken", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "none",
+            })
                 .status(200)
                 .json({ success: true, message: "User deleted successfully" });
         }
@@ -195,12 +207,19 @@ function logout(req, res) {
         }
         const user = yield user_model_1.default.findOne({ refreshToken: token });
         if (user) {
-            user.refreshToken = '';
+            user.refreshToken = "";
             yield user.save();
         }
-        res
-            .clearCookie("accessToken", { httpOnly: true, secure: false })
-            .clearCookie("refreshToken", { httpOnly: true, secure: false })
+        res.clearCookie("accessToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "none",
+        })
+            .clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "none",
+        })
             .status(200)
             .json({ success: true, message: "Logged out successfully" });
     });
